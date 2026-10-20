@@ -2,7 +2,7 @@
 
 App web sencilla (PWA) para apuntar el ejercicio desde el móvil y saber qué toca cada día.
 
-- En vivo: https://fernandomateos.github.io/pater/
+- En vivo: https://fernandomateos.com/pater (redirige a `/pater/index.html`). La sirve Vercel desde `next-app/public/pater/` del repositorio `fernandomateos.github.io`: este repositorio es la fuente y, tras cada cambio, se copia allí.
 - HTML, CSS y JavaScript sin dependencias. Los datos se guardan solo en el móvil (localStorage, clave `pater.v1`); no hay servidor ni cuentas.
 - Funciona sin conexión gracias a `sw.js`. Al cambiar archivos, sube la versión de `CACHE` en `sw.js`.
 - El plan (ejercicios, series y repeticiones) está al principio de `app.js`.

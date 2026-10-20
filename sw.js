@@ -1,8 +1,9 @@
 // Guarda la app en el móvil para que abra sin conexión.
 // Sirve lo guardado al momento y lo renueva en segundo plano.
-const CACHE = 'pater-v1';
+const CACHE = 'pater-v2';
+// Sin './': en la web, la carpeta redirige a index.html y una respuesta redirigida no vale para abrir la app.
 const ARCHIVOS = [
-  './', 'index.html', 'style.css', 'app.js', 'manifest.webmanifest',
+  'index.html', 'style.css', 'app.js', 'manifest.webmanifest',
   'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png'
 ];
 

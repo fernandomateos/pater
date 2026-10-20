@@ -4,7 +4,7 @@
   "description": "Apunta tu ejercicio y mira cómo avanzas.",
   "lang": "es",
   "id": "./",
-  "start_url": "./",
+  "start_url": "index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
