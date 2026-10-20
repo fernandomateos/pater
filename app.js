@@ -14,6 +14,14 @@ const EJ = {
   barra:      { nombre: 'Colgarse de la barra', icono: '🙌', modo: 'segundos', pista: 'Agarre cómodo, pies cerca del suelo' }
 };
 const ORDEN = ['bici', 'sentadilla', 'flexion', 'remo', 'abdominal', 'barra'];
+
+// Lo que Pater hizo antes de tener la app (carta del 20-oct-2026, hora aproximada).
+// "completo": apuntado en total, sin series; cuenta como ejercicio hecho ese día.
+const PREVIOS = [
+  { id: 'carta-2026-10-20-sentadilla', t: Date.parse('2026-10-20T09:00:00+02:00'), tipo: 'sentadilla', reps: 30, completo: true },
+  { id: 'carta-2026-10-20-flexion', t: Date.parse('2026-10-20T09:00:01+02:00'), tipo: 'flexion', reps: 30, completo: true },
+  { id: 'carta-2026-10-20-remo', t: Date.parse('2026-10-20T09:00:02+02:00'), tipo: 'remo', reps: 24, completo: true }
+];
 const FUERZA = ORDEN.filter(t => EJ[t].fuerza);
 
 // ---------- Datos en el móvil ----------
@@ -33,6 +41,13 @@ function cargar() {
 }
 
 let D = cargar();
+
+if (!D.previos) {
+  const hay = new Set(D.registros.map(r => r.id));
+  D.registros = D.registros.concat(PREVIOS.filter(r => !hay.has(r.id))).sort((a, b) => a.t - b.t);
+  D.previos = true;
+  guardar();
+}
 
 function guardar() {
   try { localStorage.setItem(CLAVE, JSON.stringify(D)); } catch (e) {}
@@ -77,7 +92,9 @@ function diaLargo(t) { return new Date(t).toLocaleDateString('es-ES', { day: 'nu
 function delDia(t) { return D.registros.filter(r => mismoDia(r.t, t)); }
 function entre(desde, hasta) { return D.registros.filter(r => r.t >= desde && r.t < hasta); }
 function deHoy(tipo) { return delDia(Date.now()).filter(r => r.tipo === tipo); }
-function hecho(tipo) { const n = deHoy(tipo).length; return EJ[tipo].fuerza ? n >= SERIES : n > 0; }
+function series(rs) { return rs.filter(r => !r.completo).length; }
+function completa(rs) { return rs.some(r => r.completo) || rs.length >= SERIES; }
+function hecho(tipo) { const rs = deHoy(tipo); return EJ[tipo].fuerza ? completa(rs) : rs.length > 0; }
 function hizoFuerza(t) { return delDia(t).some(r => EJ[r.tipo] && EJ[r.tipo].fuerza); }
 
 // Fuerza toca si esta semana lleva menos de 3 días y ayer no hubo fuerza.
@@ -98,7 +115,9 @@ function estadoHoy(tipo) {
   if (!rs.length) return '';
   if (tipo === 'bici') return '✓ ' + rs.reduce((s, r) => s + r.min, 0) + ' min';
   if (tipo === 'barra') return '✓ ' + Math.max(...rs.map(r => r.seg)) + ' s';
-  return (rs.length >= SERIES ? '✓ ' : '') + rs.length + (rs.length === 1 ? ' serie' : ' series');
+  const n = series(rs);
+  if (!n) return '✓ ' + rs.reduce((s, r) => s + r.reps, 0) + ' rep.';
+  return (completa(rs) ? '✓ ' : '') + n + (n === 1 ? ' serie' : ' series');
 }
 
 function describir(r) {
@@ -180,7 +199,7 @@ function vistaInicio() {
   }
   h += '<div style="height:12px"></div>';
   h += boton('<span class="icono">⭐</span><span class="nombre">Mi progreso</span>', 'progreso');
-  h += boton('<span class="icono">📤</span><span class="nombre">Enviar a Fernando</span>', 'enviar');
+  h += boton('<span class="icono">📤</span><span class="nombre">Enviar a Nando</span>', 'enviar');
   h += boton('↩ Deshacer último registro', 'deshacer', 'claro centro');
   return h;
 }
@@ -192,11 +211,11 @@ function vistaFuerza(tipo) {
   if (estado.listo) return vistaListo(tipo, e.nombre + ': hechas las ' + SERIES + ' series', '');
   if (estado.reps == null) estado.reps = D.reps[tipo] || 10;
   const hoy = deHoy(tipo);
-  const n = hoy.length + 1;
+  const n = series(hoy) + 1;
   let h = volver();
   h += '<h1>' + e.icono + ' ' + e.nombre + '</h1>';
   if (e.pista) h += '<p class="pista">' + e.pista + '</p>';
-  h += '<p class="serie">' + (n <= SERIES ? 'Serie ' + n + ' de ' + SERIES : 'Serie ' + n + ' (de propina)') + '</p>';
+  h += '<p class="serie">' + (completa(hoy) ? 'Hoy ya está hecho ✓<br>Serie de propina' : 'Serie ' + n + ' de ' + SERIES) + '</p>';
   h += '<p class="objetivo">Haz de ' + e.min + ' a ' + e.max + '</p>';
   h += '<p class="rotulo">Repeticiones</p>';
   h += '<div class="contador"><button data-accion="reps" data-paso="-1" aria-label="Menos">−</button>' +
@@ -344,7 +363,7 @@ function grafica(ss, valores, unidad) {
   return '<div class="grafica">' + s + '</svg></div>';
 }
 
-// --- Resumen para Fernando ---
+// --- Resumen para Nando ---
 
 function resumen(desde) {
   const hasta = masDias(desde, 7);
@@ -354,7 +373,7 @@ function resumen(desde) {
   const plural = (n, uno, varios) => n + ' ' + (n === 1 ? uno : varios);
   const fin = masDias(desde, 6);
   const mismoMes = new Date(desde).getMonth() === new Date(fin).getMonth();
-  const l = ['Hola, Fernando. Mi ejercicio de la semana del ' + (mismoMes ? new Date(desde).getDate() : diaLargo(desde)) +
+  const l = ['Hola, Nando. Mi ejercicio de la semana del ' + (mismoMes ? new Date(desde).getDate() : diaLargo(desde)) +
     ' al ' + diaLargo(fin) + ':', ''];
 
   const bici = de('bici');
@@ -364,13 +383,14 @@ function resumen(desde) {
   for (const t of FUERZA) {
     const x = de(t);
     const kilos = x.filter(r => r.kg).map(r => r.kg);
-    l.push(EJ[t].icono + ' ' + EJ[t].nombre + ': ' + plural(x.length, 'serie', 'series') + ', ' +
-      x.reduce((s, r) => s + r.reps, 0) + ' repeticiones' + (kilos.length ? ' (' + kg(Math.max(...kilos)) + ')' : ''));
+    const n = series(x), reps = x.reduce((s, r) => s + r.reps, 0);
+    l.push(EJ[t].icono + ' ' + EJ[t].nombre + ': ' + (n ? plural(n, 'serie', 'series') + ', ' : '') +
+      reps + ' repeticiones' + (kilos.length ? ' (' + kg(Math.max(...kilos)) + ')' : ''));
   }
 
   let completos = 0;
   for (let d = desde; d < hasta; d = masDias(d, 1)) {
-    if (FUERZA.every(t => rs.filter(r => r.tipo === t && mismoDia(r.t, d)).length >= SERIES)) completos++;
+    if (FUERZA.every(t => completa(rs.filter(r => r.tipo === t && mismoDia(r.t, d))))) completos++;
   }
   l.push('');
   l.push('Fuerza con todas las series: ' + plural(completos, 'día', 'días') + ' de ' + DIAS_FUERZA + (completos >= DIAS_FUERZA ? ' ✓' : ''));
@@ -382,7 +402,7 @@ function vistaEnviar() {
   const esta = inicioSemana(Date.now());
   const desde = estado.pasada ? masDias(esta, -7) : esta;
   estado.texto = resumen(desde);
-  let h = volver() + '<h1>📤 Enviar a Fernando</h1>';
+  let h = volver() + '<h1>📤 Enviar a Nando</h1>';
   h += '<div class="resumen">' + estado.texto + '</div>';
   h += boton('📤 Enviar por WhatsApp', 'compartir', 'verde centro grande');
   h += boton('Copiar el texto', 'copiar', 'claro centro');
@@ -449,10 +469,10 @@ const acciones = {
     const r = { tipo, reps: estado.reps };
     if (EJ[tipo].kilos && D.kilos > 0) r.kg = D.kilos;
     D.reps[tipo] = estado.reps;
+    const antes = hecho(tipo);
     apuntar(r);
-    const n = deHoy(tipo).length;
-    if (n === SERIES) { estado.listo = true; callar(); }
-    else avisar('✓ Serie ' + n + ' guardada');
+    if (!antes && hecho(tipo)) { estado.listo = true; callar(); }
+    else avisar('✓ Serie ' + series(deHoy(tipo)) + ' guardada');
     pintar();
   },
   empezar(el) {

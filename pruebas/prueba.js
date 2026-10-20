@@ -11,7 +11,7 @@ const ok = (cond, msg) => { if (!cond) fallos.push(msg); console.log((cond ? 'OK
   const errores = [];
   page.on('pageerror', e => errores.push(e.message));
   page.on('console', m => { if (m.type() === 'error') errores.push(m.text()); });
-  await page.clock.install({ time: new Date('2026-10-20T10:00:00+02:00') }); // martes
+  await page.clock.install({ time: new Date('2026-10-27T10:00:00+01:00') }); // martes
   const desborde = async (donde) => {
     const w = await page.evaluate(() => [document.documentElement.scrollWidth, window.innerWidth]);
     ok(w[0] <= w[1], 'sin scroll horizontal en ' + donde + ' (' + w + ')');
@@ -134,7 +134,7 @@ const ok = (cond, msg) => { if (!cond) fallos.push(msg); console.log((cond ? 'OK
       }
     }
     // lunes de esta semana: fuerza completa
-    const lun = new Date('2026-10-19T18:00:00+02:00').getTime();
+    const lun = new Date('2026-10-26T18:00:00+01:00').getTime();
     for (const tp of tipos) for (let s = 0; s < 2; s++) d.registros.push({ id: 'l' + tp + s, t: lun + s, tipo: tp, reps: 10 });
     d.registros.sort((a, b) => a.t - b.t);
     localStorage.setItem('pater.v1', JSON.stringify(d));
@@ -145,17 +145,21 @@ const ok = (cond, msg) => { if (!cond) fallos.push(msg); console.log((cond ? 'OK
   await desborde('progreso');
   ok((await page.locator('.grafica svg').count()) === 3, 'tres gráficas');
   await clic('Al inicio');
-  await clic('Enviar a Fernando');
+  await clic('Enviar a Nando');
   const texto = await page.locator('.resumen').textContent();
   console.log('\n' + texto + '\n');
+  ok(texto.includes('del 26 de octubre al 1 de noviembre'), 'semana que cruza de mes');
+  ok(texto.includes('Hola, Nando.'), 'el resumen saluda a Nando');
   ok(texto.includes('Fuerza con todas las series: 2 días de 3'), 'resumen cuenta 2 días completos (lunes y martes)');
   await shot('14-enviar');
   await page.getByRole('button', { name: 'Ver la semana pasada' }).click();
-  ok((await page.locator('.resumen').textContent()).includes('del 12 al 18 de octubre'), 'semana pasada');
+  const pasada = await page.locator('.resumen').textContent();
+  ok(pasada.includes('del 19 al 25 de octubre'), 'semana pasada');
+  ok(pasada.includes('Sentadillas: 30 repeticiones') && pasada.includes('Remo con mancuerna: 24 repeticiones'), 'la semana pasada incluye lo de la carta del 20-oct');
   await clic('Volver');
 
   // 10. Día de descanso: miércoles tras fuerza el martes
-  await page.clock.setSystemTime(new Date('2026-10-21T09:00:00+02:00'));
+  await page.clock.setSystemTime(new Date('2026-10-28T09:00:00+01:00'));
   await page.reload(); await page.clock.runFor(1000);
   ok((await page.locator('.toca').textContent()).includes('bici o paseo'), 'miércoles tras fuerza: toca bici y barra');
   await shot('15-dia-descanso');
